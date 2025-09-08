@@ -51,84 +51,36 @@
 
 // export default App;
 
-import React, { useState, useRef, useEffect } from "react";
-import { useEditorStore, TOOLS } from "./store";
+import React, { useState, useRef } from "react";
+import { useEditorStore } from "./store";
+
+// Import all the components
 import { Toolbar } from "./components/Toolbar";
 import { OptionsBar } from "./components/OptionsBar";
 import { RightPanels } from "./components/RightPanels";
 import { Workspace } from "./components/Workspace";
-
-const TextEditModal = ({ editingLayer, onCommit, onExit }) => {
-  const [text, setText] = useState(editingLayer.content);
-  const textareaRef = useRef(null);
-  const updateSelectedLayer = useEditorStore(
-    (state) => state.updateSelectedLayer
-  );
-  const selectedLayer = useEditorStore((state) =>
-    state.layers.find((l) => l.id === state.selectedLayerId)
-  );
-
-  useEffect(() => {
-    textareaRef.current.focus();
-  }, []);
-
-  const handleCommit = () => {
-    onCommit(text);
-    onExit();
-  };
-  const toggleBold = () =>
-    updateSelectedLayer(
-      "fontWeight",
-      selectedLayer.fontWeight === "bold" ? "normal" : "bold"
-    );
-  const toggleUnderline = () =>
-    updateSelectedLayer("underline", !selectedLayer.underline);
-
-  return (
-    <div className="modal-backdrop" onClick={onExit}>
-      <div className="modal-window" onClick={(e) => e.stopPropagation()}>
-        <div style={{ display: "flex", gap: "10px", marginBottom: "10px" }}>
-          <button
-            onClick={toggleBold}
-            style={{
-              fontWeight:
-                selectedLayer?.fontWeight === "bold" ? "bold" : "normal",
-            }}
-          >
-            B
-          </button>
-          <button
-            onClick={toggleUnderline}
-            style={{
-              textDecoration: selectedLayer?.underline ? "underline" : "none",
-            }}
-          >
-            U
-          </button>
-        </div>
-        <textarea
-          ref={textareaRef}
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-        />
-        <div className="modal-buttons">
-          <button onClick={onExit}>Cancel</button>
-          <button className="ok-button" onClick={handleCommit}>
-            Okay
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-};
+import { TextEditModal } from "./components/TextEditModal";
+import { PageSlider } from "./components/PageSlider"; // <-- IMPORT NEW COMPONENT
 
 function App() {
   const [editingLayer, setEditingLayer] = useState(null);
   const layerBoundsCache = useRef(new Map());
-  const { updateSelectedLayer, deleteLayer } = useEditorStore.getState();
+  const updateSelectedLayer = useEditorStore(
+    (state) => state.updateSelectedLayer
+  );
+  const deleteLayer = useEditorStore((state) => state.deleteLayer);
+
+  // Get active page data from the store
+  const activePage = useEditorStore(
+    (state) => state.pages[state.activePageIndex]
+  );
+
+  const [isLeftPanelOpen, setIsLeftPanelOpen] = useState(true);
+  const [isRightPanelOpen, setIsRightPanelOpen] = useState(true);
 
   const handleEnterEditMode = (layer) => {
-    setEditingLayer(layer);
+    const bounds = layerBoundsCache.current.get(layer.id);
+    setEditingLayer({ ...layer, ...bounds });
   };
 
   const handleCommitTextChange = (newText) => {
@@ -139,15 +91,53 @@ function App() {
     }
   };
 
+  // If there's no active page yet (e.g., on initial load), render nothing.
+  if (!activePage) return null;
+
   return (
-    <div className="app-container">
+    <div
+      className={`app-container ${
+        !isLeftPanelOpen ? "left-panel-closed" : ""
+      } ${!isRightPanelOpen ? "right-panel-closed" : ""}`}
+    >
+      <button
+        className="panel-toggle left"
+        onClick={() => setIsLeftPanelOpen((prev) => !prev)}
+        title={isLeftPanelOpen ? "Close Layers Panel" : "Open Layers Panel"}
+      >
+        {isLeftPanelOpen ? "❮" : "❯"}
+      </button>
+      <button
+        className="panel-toggle right"
+        onClick={() => setIsRightPanelOpen((prev) => !prev)}
+        title={isRightPanelOpen ? "Close Options Panel" : "Open Options Panel"}
+      >
+        {isRightPanelOpen ? "❯" : "❮"}
+      </button>
+
+      <div className="left-sidebar">
+        {/* Pass only the layers of the active page */}
+        <RightPanels layers={activePage.layers} />
+      </div>
+
       <Toolbar />
-      <OptionsBar />
-      <Workspace
-        onEnterEditMode={handleEnterEditMode}
-        layerBoundsCache={layerBoundsCache}
-      />
-      <RightPanels />
+
+      {/* ADDED WRAPPER for Workspace and Page Slider */}
+      <div className="main-content">
+        <Workspace
+          onEnterEditMode={handleEnterEditMode}
+          layerBoundsCache={layerBoundsCache}
+          // Pass active page properties to the Workspace
+          layers={activePage.layers}
+          backgroundColor={activePage.backgroundColor}
+        />
+        <PageSlider />
+      </div>
+
+      <div className="right-sidebar">
+        <OptionsBar />
+      </div>
+
       {editingLayer && (
         <TextEditModal
           editingLayer={editingLayer}
