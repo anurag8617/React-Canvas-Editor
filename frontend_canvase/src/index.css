@@ -1,593 +1,338 @@
-/* ==========================================================================
-   Cleaned & Consolidated Stylesheet (e.g., src/App.css)
-   ========================================================================== */
-
-/* --- Global Styles & Variables --- */
-:root {
-  --left-panel-width: 280px;
-  --right-panel-width: 280px;
-  --toolbar-width: 60px;
-  --page-slider-height: 90px;
-  --theme-bg-dark: #1e1e1e;
-  --theme-bg-light: #2a2a2a;
-  --theme-bg-lighter: #383838;
-  --theme-border: #1a1a1a;
-  --theme-text: #ddd;
-  --theme-accent: #b53b74;
-}
-
-body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
-    "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
-    sans-serif;
-  background-color: var(--theme-bg-dark);
-  color: var(--theme-text);
-  overflow: hidden;
-}
-
-/* --- Main App Layout (Using CSS Grid) --- */
-.app-container {
-  display: grid;
-  grid-template-columns:
-    var(--left-panel-width)
-    var(--toolbar-width)
-    1fr
-    var(--right-panel-width);
-  grid-template-rows: 1fr;
-  grid-template-areas: "left-sidebar toolbar main-content right-sidebar";
-  height: 100vh;
-  width: 100vw;
-  transition: grid-template-columns 0.3s ease-in-out;
-}
-
-/* --- Collapsible Panel Logic --- */
-.app-container.left-panel-closed {
-  --left-panel-width: 0px;
-}
-.app-container.right-panel-closed {
-  --right-panel-width: 0px;
-}
-
-/* --- Grid Area Definitions --- */
-.left-sidebar {
-  grid-area: left-sidebar;
-  overflow: hidden;
-  background-color: var(--theme-bg-light);
-  border-right: 1px solid var(--theme-border);
-  padding: 10px;
-  box-sizing: border-box;
-}
-
-.toolbar {
-  grid-area: toolbar;
-  background-color: var(--theme-bg-light);
-  padding-top: 10px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 15px;
-  border-right: 1px solid var(--theme-border);
-}
-
-.right-sidebar {
-  grid-area: right-sidebar;
-  overflow: hidden;
-  background-color: var(--theme-bg-light);
-  border-left: 1px solid var(--theme-border);
-  padding: 10px;
-  box-sizing: border-box;
-}
-
-/* This wrapper uses Flexbox to stack the workspace and slider */
-.main-content {
-  grid-area: main-content;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  background-color: var(--theme-bg-dark);
-}
-
-.workspace {
-  flex-grow: 1; /* Takes up all available vertical space */
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  padding: 10px;
-  box-sizing: border-box;
-}
-
-canvas {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-  background-color: white; /* Default canvas background */
-}
-
-/* --- Page Slider Styles --- */
-.page-slider-container {
-  background-color: var(--theme-bg-light);
-  border-top: 1px solid var(--theme-border);
-  padding: 8px;
-  height: var(--page-slider-height);
-  box-sizing: border-box;
-}
-
-.page-slider {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  height: 100%;
-}
-
-.page-thumbnail {
-  border: 2px solid #555;
-  border-radius: 4px;
-  cursor: pointer;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: space-between;
-  height: 100%;
-  aspect-ratio: 5 / 3;
-  padding-bottom: 3px;
-  box-sizing: border-box;
-  transition: border-color 0.2s;
-  position: relative;
-  overflow: hidden;
-}
-
-.page-thumbnail:hover {
-  border-color: #777;
-}
-
-.page-thumbnail.active {
-  border-color: var(--theme-accent);
-  box-shadow: 0 0 5px var(--theme-accent);
-}
-
-.thumbnail-preview {
-  width: 100%;
-  height: 100%;
-  position: absolute;
-}
-
-.page-thumbnail span {
-  font-size: 12px;
-  margin-top: 4px;
-  position: relative; /* Ensure it's on top of the preview */
-}
-
-.add-page-button {
-  height: 100%;
-  aspect-ratio: 1 / 1;
-  border-radius: 4px;
-  border: 2px dashed #555;
-  background-color: var(--theme-bg-lighter);
-  color: var(--theme-text);
-  font-size: 30px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s;
-}
-
-.add-page-button:hover {
-  border-color: var(--theme-accent);
-  color: var(--theme-accent);
-}
-
-/* --- Panel Toggle Buttons --- */
-.panel-toggle {
-  position: fixed;
-  top: 50%;
-  transform: translateY(-50%);
-  z-index: 1000;
-  background-color: var(--theme-accent);
-  color: white;
-  border: 1px solid var(--theme-border);
-  width: 24px;
-  height: 48px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 16px;
-  padding: 0;
-  transition: all 0.3s ease-in-out;
-}
-
-.panel-toggle.left {
-  left: var(--left-panel-width);
-  border-top-right-radius: 8px;
-  border-bottom-right-radius: 8px;
-  border-left: none;
-}
-
-.panel-toggle.right {
-  right: var(--right-panel-width);
-  border-top-left-radius: 8px;
-  border-bottom-left-radius: 8px;
-  border-right: none;
-}
-
-.app-container.left-panel-closed .panel-toggle.left {
-  left: 0;
-}
-
-.app-container.right-panel-closed .panel-toggle.right {
-  right: 0;
-}
-
-/* --- Toolbar, Panels & Form Controls --- */
-.tool-button {
-  background-color: #444;
-  border: 1px solid #555;
-  color: var(--theme-text);
-  width: 40px;
-  height: 40px;
-  font-size: 20px;
-  cursor: pointer;
-  border-radius: 4px;
-}
-
-.tool-button.active {
-  background-color: var(--theme-accent);
-  border-color: var(--theme-accent);
-}
-
-.panel-section {
-  background-color: var(--theme-bg-lighter);
-  padding: 8px;
-  border-radius: 4px;
-  margin-bottom: 10px;
-}
-
-.panel-section h4 {
-  margin-top: 0;
-  border-bottom: 1px solid #444;
-  padding-bottom: 5px;
-}
-
-.font-picker-wrapper {
-  position: relative;
-  display: inline-block;
-}
-
-.font-picker-button {
-  background-color: #3a3a3a;
-  color: var(--theme-text);
-  padding: 4px 10px;
-  border: 1px solid #555;
-  border-radius: 4px;
-  cursor: pointer;
-  width: 180px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.font-picker-dropdown {
-  position: absolute;
-  bottom: 110%; /* Open upwards */
-  left: 0;
-  background-color: #3a3a3a;
-  border: 1px solid #555;
-  border-radius: 4px;
-  box-shadow: 0 -4px 8px rgba(0, 0, 0, 0.3);
-  z-index: 2000;
-  width: 180px;
-  max-height: 250px;
-  overflow-y: auto;
-}
-
-.font-picker-dropdown button {
-  background-color: transparent;
-  color: var(--theme-text);
-  border: none;
-  padding: 8px 12px;
-  text-align: left;
-  cursor: pointer;
-  font-size: 16px;
-  width: 100%;
-}
-
-.font-picker-dropdown button:hover {
-  background-color: var(--theme-accent);
-} /* ==========================================================================
-   Cleaned & Consolidated Stylesheet (e.g., src/App.css)
-   ========================================================================== */
-
-/* --- Global Styles & Variables --- */
-:root {
-  --left-panel-width: 280px;
-  --right-panel-width: 280px;
-  --toolbar-width: 60px;
-  --page-slider-height: 90px;
-  --theme-bg-dark: #1e1e1e;
-  --theme-bg-light: #2a2a2a;
-  --theme-bg-lighter: #383838;
-  --theme-border: #1a1a1a;
-  --theme-text: #ddd;
-  --theme-accent: #b53b74;
-}
-
-body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
-    "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
-    sans-serif;
-  background-color: var(--theme-bg-dark);
-  color: var(--theme-text);
-  overflow: hidden;
-}
-
-/* --- Main App Layout (Using CSS Grid) --- */
-.app-container {
-  display: grid;
-  grid-template-columns:
-    var(--left-panel-width)
-    var(--toolbar-width)
-    1fr
-    var(--right-panel-width);
-  grid-template-rows: 1fr;
-  grid-template-areas: "left-sidebar toolbar main-content right-sidebar";
-  height: 100vh;
-  width: 100vw;
-  transition: grid-template-columns 0.3s ease-in-out;
-}
-
-/* --- Collapsible Panel Logic --- */
-.app-container.left-panel-closed {
-  --left-panel-width: 0px;
-}
-.app-container.right-panel-closed {
-  --right-panel-width: 0px;
-}
-
-/* --- Grid Area Definitions --- */
-.left-sidebar {
-  grid-area: left-sidebar;
-  overflow: hidden;
-  background-color: var(--theme-bg-light);
-  border-right: 1px solid var(--theme-border);
-  padding: 10px;
-  box-sizing: border-box;
-}
-
-.toolbar {
-  grid-area: toolbar;
-  background-color: var(--theme-bg-light);
-  padding-top: 10px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 15px;
-  border-right: 1px solid var(--theme-border);
-}
-
-.right-sidebar {
-  grid-area: right-sidebar;
-  overflow: hidden;
-  background-color: var(--theme-bg-light);
-  border-left: 1px solid var(--theme-border);
-  padding: 10px;
-  box-sizing: border-box;
-}
-
-/* This wrapper uses Flexbox to stack the workspace and slider */
-.main-content {
-  grid-area: main-content;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  background-color: var(--theme-bg-dark);
-}
-
-.workspace {
-  flex-grow: 1; /* Takes up all available vertical space */
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  padding: 10px;
-  box-sizing: border-box;
-}
-
-canvas {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-  background-color: white; /* Default canvas background */
-}
-
-/* --- Page Slider Styles --- */
-.page-slider-container {
-  background-color: var(--theme-bg-light);
-  border-top: 1px solid var(--theme-border);
-  padding: 8px;
-  height: var(--page-slider-height);
-  box-sizing: border-box;
-}
-
-.page-slider {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  height: 100%;
-}
-
-.page-thumbnail {
-  border: 2px solid #555;
-  border-radius: 4px;
-  cursor: pointer;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: space-between;
-  height: 100%;
-  aspect-ratio: 5 / 3;
-  padding-bottom: 3px;
-  box-sizing: border-box;
-  transition: border-color 0.2s;
-  position: relative;
-  overflow: hidden;
-}
-
-.page-thumbnail:hover {
-  border-color: #777;
-}
-
-.page-thumbnail.active {
-  border-color: var(--theme-accent);
-  box-shadow: 0 0 5px var(--theme-accent);
-}
-
-.thumbnail-preview {
-  width: 100%;
-  height: 100%;
-  position: absolute;
-}
-
-.page-thumbnail span {
-  font-size: 12px;
-  margin-top: 4px;
-  position: relative; /* Ensure it's on top of the preview */
-}
-
-.add-page-button {
-  height: 100%;
-  aspect-ratio: 1 / 1;
-  border-radius: 4px;
-  border: 2px dashed #555;
-  background-color: var(--theme-bg-lighter);
-  color: var(--theme-text);
-  font-size: 30px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s;
-}
-
-.add-page-button:hover {
-  border-color: var(--theme-accent);
-  color: var(--theme-accent);
-}
-
-/* --- Panel Toggle Buttons --- */
-.panel-toggle {
-  position: fixed;
-  top: 50%;
-  transform: translateY(-50%);
-  z-index: 1000;
-  background-color: var(--theme-accent);
-  color: white;
-  border: 1px solid var(--theme-border);
-  width: 24px;
-  height: 48px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 16px;
-  padding: 0;
-  transition: all 0.3s ease-in-out;
-}
-
-.panel-toggle.left {
-  left: var(--left-panel-width);
-  border-top-right-radius: 8px;
-  border-bottom-right-radius: 8px;
-  border-left: none;
-}
-
-.panel-toggle.right {
-  right: var(--right-panel-width);
-  border-top-left-radius: 8px;
-  border-bottom-left-radius: 8px;
-  border-right: none;
-}
-
-.app-container.left-panel-closed .panel-toggle.left {
-  left: 0;
-}
-
-.app-container.right-panel-closed .panel-toggle.right {
-  right: 0;
-}
-
-/* --- Toolbar, Panels & Form Controls --- */
-.tool-button {
-  background-color: #444;
-  border: 1px solid #555;
-  color: var(--theme-text);
-  width: 40px;
-  height: 40px;
-  font-size: 20px;
-  cursor: pointer;
-  border-radius: 4px;
-}
-
-.tool-button.active {
-  background-color: var(--theme-accent);
-  border-color: var(--theme-accent);
-}
-
-.panel-section {
-  background-color: var(--theme-bg-lighter);
-  padding: 8px;
-  border-radius: 4px;
-  margin-bottom: 10px;
-}
-
-.panel-section h4 {
-  margin-top: 0;
-  border-bottom: 1px solid #444;
-  padding-bottom: 5px;
-}
-
-.font-picker-wrapper {
-  position: relative;
-  display: inline-block;
-}
-
-.font-picker-button {
-  background-color: #3a3a3a;
-  color: var(--theme-text);
-  padding: 4px 10px;
-  border: 1px solid #555;
-  border-radius: 4px;
-  cursor: pointer;
-  width: 180px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.font-picker-dropdown {
-  position: absolute;
-  bottom: 110%; /* Open upwards */
-  left: 0;
-  background-color: #3a3a3a;
-  border: 1px solid #555;
-  border-radius: 4px;
-  box-shadow: 0 -4px 8px rgba(0, 0, 0, 0.3);
-  z-index: 2000;
-  width: 180px;
-  max-height: 250px;
-  overflow-y: auto;
-}
-
-.font-picker-dropdown button {
-  background-color: transparent;
-  color: var(--theme-text);
-  border: none;
-  padding: 8px 12px;
-  text-align: left;
-  cursor: pointer;
-  font-size: 16px;
-  width: 100%;
-}
-
-.font-picker-dropdown button:hover {
-  background-color: var(--theme-accent);
-}
+  /* ==========================================================================
+    Complete Application Stylesheet
+    ========================================================================== */
+
+  /* --- Global Styles & Variables --- */
+  :root {
+    --left-panel-width: 280px;
+    --right-panel-width: 280px;
+    --toolbar-width: 60px;
+    --page-slider-height: 90px;
+    --theme-bg-dark: #1e1e1e;
+    --theme-bg-light: #2a2a2a;
+    --theme-bg-lighter: #383838;
+    --theme-border: #1a1a1a;
+    --theme-text: #ddd;
+    --theme-accent: #b53b74;
+  }
+
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
+      "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
+      sans-serif;
+    background-color: var(--theme-bg-dark);
+    color: var(--theme-text);
+    overflow: hidden;
+  }
+
+  /* --- Main App Layout (Using CSS Grid) --- */
+  .app-container {
+    display: grid;
+    grid-template-columns:
+      var(--left-panel-width)
+      var(--toolbar-width)
+      1fr
+      var(--right-panel-width);
+    grid-template-rows: 1fr;
+    grid-template-areas: "left-sidebar toolbar main-content right-sidebar";
+    height: 100vh;
+    width: 100vw;
+    transition: grid-template-columns 0.3s ease-in-out;
+  }
+
+  /* --- Collapsible Panel Logic --- */
+  .app-container.left-panel-closed {
+    --left-panel-width: 0px;
+  }
+  .app-container.right-panel-closed {
+    --right-panel-width: 0px;
+  }
+
+  /* --- Grid Area Definitions --- */
+  .left-sidebar {
+    grid-area: left-sidebar;
+    overflow: hidden;
+    background-color: var(--theme-bg-light);
+    border-right: 1px solid var(--theme-border);
+    padding: 10px;
+    box-sizing: border-box;
+  }
+
+  .toolbar {
+    grid-area: toolbar;
+    background-color: var(--theme-bg-light);
+    padding-top: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+    border-right: 1px solid var(--theme-border);
+  }
+
+  .right-sidebar {
+    grid-area: right-sidebar;
+    overflow: hidden;
+    background-color: var(--theme-bg-light);
+    border-left: 1px solid var(--theme-border);
+    padding: 10px;
+    box-sizing: border-box;
+  }
+
+  /* This wrapper uses Flexbox to stack the workspace and slider */
+  .main-content {
+    grid-area: main-content;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background-color: var(--theme-bg-dark);
+  }
+
+  .workspace {
+    flex-grow: 1; /* Takes up all available vertical space */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    padding: 10px;
+    box-sizing: border-box;
+  }
+
+  canvas {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    background-color: white; /* Default canvas background */
+  }
+
+  /* --- Page Slider Styles --- */
+  .page-slider-container {
+    background-color: var(--theme-bg-light);
+    border-top: 1px solid var(--theme-border);
+    padding: 8px;
+    height: var(--page-slider-height);
+    box-sizing: border-box;
+  }
+
+  .page-slider {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    height: 100%;
+  }
+
+  .add-page-button {
+    height: 100%;
+    aspect-ratio: 1 / 1;
+    border-radius: 4px;
+    border: 2px dashed #555;
+    background-color: var(--theme-bg-lighter);
+    color: var(--theme-text);
+    font-size: 30px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+  }
+
+  .add-page-button:hover {
+    border-color: var(--theme-accent);
+    color: var(--theme-accent);
+  }
+
+  /* --- Corrected Page Thumbnail Styles --- */
+  .page-thumbnail {
+    border: 2px solid #555;
+    border-radius: 4px;
+    cursor: pointer;
+    height: 100%; /* Sets the height to fill the slider */
+    aspect-ratio: 5 / 3; /* Automatically calculates width from height */
+    box-sizing: border-box;
+    transition: border-color 0.2s;
+    position: relative; /* Parent for absolute children */
+    overflow: hidden;
+  }
+
+  .page-thumbnail:hover {
+    border-color: #777;
+  }
+
+  .page-thumbnail.active {
+    border-color: var(--theme-accent);
+    box-shadow: 0 0 5px var(--theme-accent);
+  }
+
+  .thumbnail-preview {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+  }
+
+  .page-thumbnail span {
+    position: absolute;
+    bottom: 3px;
+    left: 0;
+    width: 100%;
+    text-align: center;
+    font-size: 12px;
+    color: white;
+    text-shadow: 0 0 3px rgba(0, 0, 0, 0.8); /* Improves readability */
+    z-index: 5; /* Ensures it's above the preview */
+  }
+
+  /* --- Page Slider Delete Button Styles (Polished) --- */
+  .page-thumbnail .page-delete-button {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%; /* 50% for a perfect circle */
+    background-color: #f44336;
+    color: white;
+    border: 2px solid var(--theme-bg-light);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: monospace;
+    font-weight: bold;
+    font-size: 16px;
+    line-height: 1;
+    z-index: 10;
+    opacity: 0;
+    visibility: hidden;
+    transform: scale(0.8);
+    transition: all 0.2s ease-in-out;
+  }
+
+  .page-thumbnail:hover .page-delete-button {
+    opacity: 1;
+    visibility: visible;
+    transform: scale(1);
+  }
+
+  .page-delete-button:hover {
+    background-color: #e53935;
+    transform: scale(1.1);
+  }
+
+  /* --- Panel Toggle Buttons --- */
+  .panel-toggle {
+    position: fixed;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 1000;
+    background-color: var(--theme-accent);
+    color: white;
+    border: 1px solid var(--theme-border);
+    width: 24px;
+    height: 48px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    padding: 0;
+    transition: all 0.3s ease-in-out;
+  }
+
+  .panel-toggle.left {
+    left: var(--left-panel-width);
+    border-top-right-radius: 8px;
+    border-bottom-right-radius: 8px;
+    border-left: none;
+  }
+
+  .panel-toggle.right {
+    right: var(--right-panel-width);
+    border-top-left-radius: 8px;
+    border-bottom-left-radius: 8px;
+    border-right: none;
+  }
+
+  .app-container.left-panel-closed .panel-toggle.left {
+    left: 0;
+  }
+
+  .app-container.right-panel-closed .panel-toggle.right {
+    right: 0;
+  }
+
+  /* --- Toolbar, Panels & Form Controls --- */
+  .tool-button {
+    background-color: #444;
+    border: 1px solid #555;
+    color: var(--theme-text);
+    width: 40px;
+    height: 40px;
+    font-size: 20px;
+    cursor: pointer;
+    border-radius: 4px;
+  }
+
+  .tool-button.active {
+    background-color: var(--theme-accent);
+    border-color: var(--theme-accent);
+  }
+
+  .panel-section {
+    background-color: var(--theme-bg-lighter);
+    padding: 8px;
+    border-radius: 4px;
+    margin-bottom: 10px;
+  }
+
+  .panel-section h4 {
+    margin-top: 0;
+    border-bottom: 1px solid #444;
+    padding-bottom: 5px;
+  }
+
+  .font-picker-wrapper {
+    position: relative;
+    display: inline-block;
+  }
+
+  .font-picker-button {
+    background-color: #3a3a3a;
+    color: var(--theme-text);
+    padding: 4px 10px;
+    border: 1px solid #555;
+    border-radius: 4px;
+    cursor: pointer;
+    width: 180px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .font-picker-dropdown {
+    position: absolute;
+    bottom: 110%; /* Open upwards */
+    left: 0;
+    background-color: #3a3a3a;
+    border: 1px solid #555;
+    border-radius: 4px;
+    box-shadow: 0 -4px 8px rgba(0, 0, 0, 0.3);
+    z-index: 2000;
+    width: 180px;
+    max-height: 250px;
+    overflow-y: auto;
+  }
+
+  .font-picker-dropdown button {
+    background-color: transparent;
+    color: var(--theme-text);
+    border: none;
+    padding: 8px 12px;
+    text-align: left;
+    cursor: pointer;
+    font-size: 16px;
+    width: 100%;
+  }
+
+  .font-picker-dropdown button:hover {
+    background-color: var(--theme-accent);
+  }

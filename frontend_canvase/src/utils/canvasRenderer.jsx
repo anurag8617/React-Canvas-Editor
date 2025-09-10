@@ -138,7 +138,7 @@ export const drawLayers = (ctx, layers, imageCache, forThumbnail = false) => {
       }
       case "image": {
         if (forThumbnail) {
-          ctx.fillStyle = "#a0a0a0";
+          ctx.fillStyle = "#ffffffff";
           ctx.fillRect(
             -layer.width / 2,
             -layer.height / 2,

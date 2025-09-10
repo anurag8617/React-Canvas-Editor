@@ -1,6 +1,173 @@
 import React, { useRef, useEffect, useState } from "react";
 import { useEditorStore, TOOLS } from "../store";
 
+
+const styles = {
+  // Main Bar Layout
+  optionsBar: {
+    display: "flex",
+    alignItems: "flex-start",
+    gap: "16px",
+    padding: "8px 12px",
+    backgroundColor: "#2a2a2a", // from var(--theme-bg-light)
+    borderTop: "1px solid #1a1a1a", // from var(--theme-border)
+    height: "70px",
+    boxSizing: "border-box",
+  },
+  // Reusable Wrappers
+  optionControl: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "4px",
+  },
+  label: {
+    fontSize: "10px",
+    color: "#9e9e9e",
+    textTransform: "uppercase",
+    userSelect: "none",
+  },
+  controlGroup: {
+    display: "flex",
+    alignItems: "center",
+    gap: "4px",
+  },
+  // Specific Controls
+  iconButton: {
+    background: "#3f3f3f",
+    color: "#e0e0e0",
+    border: "1px solid #555",
+    padding: "5px",
+    borderRadius: "6px",
+    cursor: "pointer",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  iconButtonActive: {
+    background: "#b53b74", // from var(--theme-accent)
+    color: "#ffffff",
+    borderColor: "#b53b74",
+  },
+  inputNumber: {
+    width: "55px",
+    border: "1px solid #555",
+    background: "#3f3f3f",
+    color: "#e0e0e0",
+    borderRadius: "6px",
+    padding: "6px",
+    textAlign: "center",
+    fontSize: "12px",
+  },
+  colorInputWrapper: {
+    display: "flex",
+    alignItems: "center",
+    gap: "4px",
+    border: "1px solid #555",
+    borderRadius: "6px",
+    padding: "2px 5px",
+    width: "fit-content",
+  },
+  colorInput: {
+    width: "28px",
+    height: "28px",
+    border: "none",
+    padding: "0",
+    background: "transparent",
+    cursor: "pointer",
+  },
+  // Font Picker
+  fontPicker: {
+    position: "relative",
+  },
+  fontPickerButton: {
+    padding: "6px 10px",
+    background: "#3f3f3f",
+    border: "1px solid #555",
+    color: "#e0e0e0",
+    borderRadius: "6px",
+    cursor: "pointer",
+    width: "180px",
+    boxSizing: "border-box",
+    textAlign: "left",
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    fontSize: "12px",
+  },
+  fontPickerDropdown: {
+    position: "absolute",
+    top: "110%",
+    left: 0,
+    background: "#383838",
+    border: "1px solid #1a1a1a",
+    borderRadius: "8px",
+    boxShadow: "0 4px 12px rgba(0,0,0,0.5)",
+    zIndex: 10,
+    maxHeight: "200px",
+    overflowY: "auto",
+    width: "180px",
+    padding: "4px",
+  },
+  fontListItem: {
+    padding: "8px 12px",
+    border: "none",
+    background: "transparent",
+    color: "#e0e0e0",
+    width: "100%",
+    textAlign: "left",
+    cursor: "pointer",
+    borderRadius: "4px",
+    fontSize: "12px",
+  },
+};
+
+// --- Data ---
+const fontFamilies = [
+  "Roboto",
+  "Lato",
+  "Montserrat",
+  "Oswald",
+  "Lobster",
+  "Playfair Display",
+  "Source Code Pro",
+  "Arial",
+  "Georgia",
+  "Inter",
+  "Poppins",
+  "Nunito Sans",
+  "DM Sans",
+  "Work Sans",
+  "Space Grotesk",
+  "Cormorant Garamond",
+  "Pacifico",
+  "Righteous",
+];
+
+
+
+function drawImageCover(ctx, img, x, y, width, height) {
+  const imgRatio = img.width / img.height;
+  const targetRatio = width / height;
+
+  let srcX, srcY, srcW, srcH;
+
+  if (imgRatio > targetRatio) {
+    // Image is wider → crop horizontally
+    srcH = img.height;
+    srcW = srcH * targetRatio;
+    srcX = (img.width - srcW) / 2;
+    srcY = 0;
+  } else {
+    // Image is taller → crop vertically
+    srcW = img.width;
+    srcH = srcW / targetRatio;
+    srcX = 0;
+    srcY = (img.height - srcH) / 2;
+  }
+
+  ctx.drawImage(img, srcX, srcY, srcW, srcH, x, y, width, height);
+}
+
 const getWrappedLines = (ctx, text, maxWidth) => {
   const lines = [];
   const paragraphs = text.split("\n");
@@ -47,12 +214,68 @@ const fillTextWithSpacing = (ctx, text, x, y, spacing) => {
   }
 };
 
+// ✅ FIX: This is the updated, corrected function for drawing curved text.
+const drawCurveText = (ctx, layer) => {
+  const { content, color, fontSize, fontFamily, fontWeight, curveRadius } =
+    layer;
+  ctx.font = `${fontWeight} ${fontSize}px ${fontFamily}`;
+  ctx.fillStyle = color;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "bottom"; // Use 'bottom' for more predictable placement on the arc
+
+  const text = content || "";
+  const radius = curveRadius;
+  if (radius === 0 || text === "") return;
+
+  // Find the total width of the text to center it on the arc
+  const textWidth = ctx.measureText(text).width;
+  const arcLength = textWidth;
+
+  // Calculate the angle the text will span
+  const totalAngle = arcLength / Math.abs(radius);
+  // The starting angle to center the text
+  const startAngle = -totalAngle / 2;
+
+  ctx.save();
+  // Rotate to the starting point of the text
+  ctx.rotate(startAngle);
+
+  for (let i = 0; i < text.length; i++) {
+    const char = text[i];
+    const charWidth = ctx.measureText(char).width;
+
+    // The angle for this character's segment
+    const charAngle = charWidth / Math.abs(radius);
+
+    // Rotate halfway through the character's angle to center it
+    ctx.rotate(charAngle / 2);
+
+    // Draw the character
+    // For upward curve (positive radius), draw normally
+    // For downward curve (negative radius), flip the character
+    if (radius > 0) {
+      ctx.fillText(char, 0, -radius);
+    } else {
+      ctx.save();
+      ctx.scale(-1, -1); // Flip character
+      ctx.fillText(char, 0, radius);
+      ctx.restore();
+    }
+
+    // Rotate the other half of the angle to position for the next character
+    ctx.rotate(charAngle / 2);
+  }
+
+  ctx.restore();
+};
+
 export const Workspace = ({ onEnterEditMode }) => {
   const canvasRef = useRef(null);
   const dragStateRef = useRef(null);
   const layerBoundsCache = useRef(new Map());
   const imageCache = useRef(new Map());
   const [forceUpdate, setForceUpdate] = useState(0);
+  const debounceTimer = useRef(null);
 
   const layers = useEditorStore(
     (state) => state.pages[state.activePageIndex]?.layers || []
@@ -62,12 +285,18 @@ export const Workspace = ({ onEnterEditMode }) => {
   );
   const selectedLayerId = useEditorStore((state) => state.selectedLayerId);
   const activeTool = useEditorStore((state) => state.activeTool);
+  const activePageIndex = useEditorStore((state) => state.activePageIndex);
+  const updatePageThumbnail = useEditorStore(
+    (state) => state.updatePageThumbnail
+  );
+
   const {
     setSelectedLayerId,
     addTextLayer,
     addRectangleLayer,
     addCircleLayer,
     updateSelectedLayer,
+    addCurveTextLayer,
   } = useEditorStore.getState();
 
   useEffect(() => {
@@ -90,15 +319,13 @@ export const Workspace = ({ onEnterEditMode }) => {
       canvas.style.width = `${newWidth}px`;
       canvas.style.height = `${newHeight}px`;
       context.scale(dpr, dpr);
-
-      // ✅ FIX 1: Force a re-draw after resizing the canvas when a sidebar is toggled.
       setForceUpdate((c) => c + 1);
     };
     const resizeObserver = new ResizeObserver(resizeCanvas);
     resizeObserver.observe(container);
     resizeCanvas();
     return () => resizeObserver.disconnect();
-  }, []); // This empty dependency array is correct.
+  }, []);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -119,43 +346,33 @@ export const Workspace = ({ onEnterEditMode }) => {
       ctx.save();
       ctx.translate(layer.x, layer.y);
       ctx.rotate((Math.PI / 180) * layer.rotation);
+
       if (layer.type === "text") {
         ctx.font = `${layer.fontWeight} ${layer.fontSize}px ${layer.fontFamily}`;
         ctx.textAlign = layer.textAlign;
-
         let content = layer.content || "";
         if (layer.textCase === "uppercase") content = content.toUpperCase();
         if (layer.textCase === "lowercase") content = content.toLowerCase();
-
         const lines = getWrappedLines(ctx, content, layer.width);
         const lineHeight = layer.fontSize * layer.lineHeight;
-
-        // ✅ FIX 2: Dynamically calculate the text box height based on content.
         const calculatedHeight = lines.length * lineHeight;
         const boxWidth = layer.width + layer.padding * 2;
-        const boxHeight = calculatedHeight + layer.padding * 2; // Use the real height
-
-        // This ensures the blue selection box will have the correct size.
+        const boxHeight = calculatedHeight + layer.padding * 2;
         layerBoundsCache.current.set(layer.id, {
           width: boxWidth,
           height: boxHeight,
         });
-
         const halfW = boxWidth / 2,
           halfH = boxHeight / 2;
-
         if (layer.hasShadow) {
           ctx.shadowColor = layer.shadowColor;
           ctx.shadowBlur = layer.shadowBlur;
           ctx.shadowOffsetX = layer.shadowOffsetX;
           ctx.shadowOffsetY = layer.shadowOffsetY;
         }
-
-        // Clip the drawing area to the dynamically calculated box height
         ctx.beginPath();
         ctx.rect(-halfW, -halfH, boxWidth, boxHeight);
         ctx.clip();
-
         ctx.fillStyle = layer.color;
         ctx.textBaseline = "middle";
         const startY = -halfH + layer.padding + lineHeight / 2;
@@ -191,9 +408,27 @@ export const Workspace = ({ onEnterEditMode }) => {
         });
         const halfW = layer.width / 2,
           halfH = layer.height / 2;
-        if (layer.fillColor) {
-          ctx.fillStyle = layer.fillColor;
-          ctx.fillRect(-halfW, -halfH, layer.width, layer.height);
+        if (layer.fillType === "image" && layer.fillImageSrc) {
+          const img = imageCache.current.get(layer.fillImageSrc);
+          if (img) {
+            ctx.beginPath();
+            ctx.rect(-halfW, -halfH, layer.width, layer.height);
+            ctx.clip();
+            drawImageCover(ctx, img, -halfW, -halfH, layer.width, layer.height);
+          } else {
+            const imgToLoad = new Image();
+            imgToLoad.crossOrigin = "anonymous";
+            imgToLoad.src = layer.fillImageSrc;
+            imgToLoad.onload = () => {
+              imageCache.current.set(layer.fillImageSrc, imgToLoad);
+              setForceUpdate((c) => c + 1);
+            };
+          }
+        } else {
+          if (layer.fillColor) {
+            ctx.fillStyle = layer.fillColor;
+            ctx.fillRect(-halfW, -halfH, layer.width, layer.height);
+          }
         }
         if (layer.strokeWidth > 0) {
           ctx.strokeStyle = layer.strokeColor;
@@ -207,9 +442,26 @@ export const Workspace = ({ onEnterEditMode }) => {
         });
         ctx.beginPath();
         ctx.arc(0, 0, layer.radius, 0, 2 * Math.PI);
-        if (layer.fillColor) {
-          ctx.fillStyle = layer.fillColor;
-          ctx.fill();
+        if (layer.fillType === "image" && layer.fillImageSrc) {
+          const img = imageCache.current.get(layer.fillImageSrc);
+          if (img) {
+            ctx.clip();
+            const radius = layer.radius;
+            ctx.drawImage(img, -radius, -radius, radius * 2, radius * 2);
+          } else {
+            const imgToLoad = new Image();
+            imgToLoad.crossOrigin = "anonymous";
+            imgToLoad.src = layer.fillImageSrc;
+            imgToLoad.onload = () => {
+              imageCache.current.set(layer.fillImageSrc, imgToLoad);
+              setForceUpdate((c) => c + 1);
+            };
+          }
+        } else {
+          if (layer.fillColor) {
+            ctx.fillStyle = layer.fillColor;
+            ctx.fill();
+          }
         }
         if (layer.strokeWidth > 0) {
           ctx.strokeStyle = layer.strokeColor;
@@ -246,7 +498,16 @@ export const Workspace = ({ onEnterEditMode }) => {
             layer.height
           );
         }
+      } else if (layer.type === "curvetext") {
+        const boundsWidth = Math.abs(layer.curveRadius) * 2;
+        const boundsHeight = Math.abs(layer.curveRadius);
+        layerBoundsCache.current.set(layer.id, {
+          width: boundsWidth,
+          height: boundsHeight,
+        });
+        drawCurveText(ctx, layer);
       }
+
       ctx.restore();
     });
 
@@ -271,7 +532,7 @@ export const Workspace = ({ onEnterEditMode }) => {
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
         ctx.fillStyle = "#0099ff";
-        ctx.fillText("↺", 0, -halfH - 30 / scale);
+        ctx.fillText("●", 0, -halfH - 30 / scale);
         ctx.restore();
         const handleSize = 10 / scale;
         const handles = [
@@ -303,7 +564,23 @@ export const Workspace = ({ onEnterEditMode }) => {
       }
     }
     ctx.restore();
-  }, [layers, backgroundColor, selectedLayerId, activeTool, forceUpdate]);
+
+    clearTimeout(debounceTimer.current);
+    debounceTimer.current = setTimeout(() => {
+      if (canvasRef.current) {
+        const dataURL = canvasRef.current.toDataURL("image/jpeg", 0.5);
+        updatePageThumbnail(activePageIndex, dataURL);
+      }
+    }, 500);
+  }, [
+    layers,
+    backgroundColor,
+    selectedLayerId,
+    activeTool,
+    forceUpdate,
+    activePageIndex,
+    updatePageThumbnail,
+  ]);
 
   useEffect(() => {
     const handleMouseMove = (e) => {
@@ -378,6 +655,7 @@ export const Workspace = ({ onEnterEditMode }) => {
     const handleMouseUp = () => {
       dragStateRef.current = null;
     };
+
     window.addEventListener("mousemove", handleMouseMove);
     window.addEventListener("mouseup", handleMouseUp);
     return () => {
@@ -446,7 +724,10 @@ export const Workspace = ({ onEnterEditMode }) => {
     const mouseX = (e.clientX - rect.left) / scale;
     const mouseY = (e.clientY - rect.top) / scale;
     const { layer: clickedLayer } = findClickTarget(mouseX, mouseY, scale);
-    if (clickedLayer && clickedLayer.type === "text") {
+    if (
+      clickedLayer &&
+      (clickedLayer.type === "text" || clickedLayer.type === "curvetext")
+    ) {
       onEnterEditMode(clickedLayer);
     }
   };
@@ -506,6 +787,47 @@ export const Workspace = ({ onEnterEditMode }) => {
       addRectangleLayer(mouseX, mouseY);
     } else if (activeTool === TOOLS.CIRCLE) {
       addCircleLayer(mouseX, mouseY);
+    } else if (activeTool === TOOLS.CURVE_TEXT) {
+      addCurveTextLayer(mouseX, mouseY);
+    }
+  };
+
+  const handleImageDrop = (e) => {
+    e.preventDefault();
+    const imageURL = e.dataTransfer.getData("image-fill-url");
+    if (!imageURL) return;
+
+    const canvas = canvasRef.current;
+    const rect = canvas.getBoundingClientRect();
+    const scale = rect.width / 1500;
+    const mouseX = (e.clientX - rect.left) / scale;
+    const mouseY = (e.clientY - rect.top) / scale;
+    const { layer: targetLayer } = findClickTarget(mouseX, mouseY, scale);
+
+    if (
+      targetLayer &&
+      (targetLayer.type === "rectangle" || targetLayer.type === "circle")
+    ) {
+      useEditorStore.setState((state) => ({
+        pages: state.pages.map((page, index) => {
+          if (index !== state.activePageIndex) {
+            return page;
+          }
+          return {
+            ...page,
+            layers: page.layers.map((layer) => {
+              if (layer.id !== targetLayer.id) {
+                return layer;
+              }
+              return {
+                ...layer,
+                fillType: "image",
+                fillImageSrc: imageURL,
+              };
+            }),
+          };
+        }),
+      }));
     }
   };
 
@@ -515,6 +837,8 @@ export const Workspace = ({ onEnterEditMode }) => {
         ref={canvasRef}
         onMouseDown={handleMouseDown}
         onDoubleClick={handleDoubleClick}
+        onDragOver={(e) => e.preventDefault()}
+        onDrop={handleImageDrop}
       />
     </div>
   );

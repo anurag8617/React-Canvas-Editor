@@ -10,10 +10,9 @@ import {
   BsImage,
 } from "react-icons/bs";
 
-// A predefined list of assets for the example
 const sampleAssets = [
   {
-    url: "https://images.unsplash.com/photo-1542291026-7eec264c27ab?w=400",
+    url: "https://images.unsplash.com/photo-1549298916-b41d501d3772?w=400",
     name: "Red Shoe",
   },
   {
@@ -21,15 +20,23 @@ const sampleAssets = [
     name: "Vintage Camera",
   },
   {
-    url: "https://images.unsplash.com/photo-1578642353139-2a92a2a0f3b3?w=400",
+    url: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400",
     name: "Headphones",
+  },
+  {
+    url: "https://plus.unsplash.com/premium_photo-1668319914124-57301e0a1850?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Nnx8Z2lybHxlbnwwfHwwfHx8MA%3D%3D",
+    name: "Coffee Cup",
+  },
+  {
+    url: "https://images.unsplash.com/photo-1682161197556-1bceb285272a?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1yZWxhdGVkfDY5fHx8ZW58MHx8fHx8",
+    name: "Mountain",
   },
 ];
 
 const PanelStyles = () => (
   <style>{`
     .sidebar-tabs { display: flex; background-color: #383838; border-radius: 8px; padding: 4px; margin-bottom: 10px; }
-    .sidebar-tab { flex: 1; padding: 8px; background: none; border: none; color: #9e9e9e; cursor: pointer; border-radius: 6px; font-weight: bold; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 5px; }
+    .sidebar-tab { flex: 1; padding: 8px; margin: 5px; background: none; border: none; color: #9e9e9e; cursor: pointer; border-radius: 6px; font-weight: bold; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 5px; }
     .sidebar-tab:hover { background-color: #4f4f4f; color: #e0e0e0; }
     .sidebar-tab.active { background-color: #b53b74; color: white; }
     .assets-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
@@ -173,6 +180,11 @@ export const RightPanels = () => {
                   alt={asset.name}
                   onClick={() => handleAssetClick(asset.url)}
                   crossOrigin="anonymous"
+                  // CHECK THESE TWO LINES
+                  draggable={true}
+                  onDragStart={(e) => {
+                    e.dataTransfer.setData("image-fill-url", asset.url);
+                  }}
                 />
               </div>
             ))}
